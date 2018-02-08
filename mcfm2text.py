@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import argparse
+import numbers
 import re
 
 # parser
@@ -35,6 +36,8 @@ parser_match = subparsers.add_parser("match", help="")
 
 parser_delta = subparsers.add_parser("delta", help="")
 
+class MixedObs(Exception):
+    pass
 
 class mcfmhisto(object):
     def __init__(self, obs, nbins, xmin, xmax, bins, xsecs):
@@ -45,6 +48,9 @@ class mcfmhisto(object):
         self.bins = bins
         self.xsecs = xsecs
 
+    def __repr__(self):
+        pass
+
     def __str__(self):
         print(self.obs)
         print(self.nbins)
@@ -53,6 +59,34 @@ class mcfmhisto(object):
         print(self.bins)
         print(self.xsecs)
         return ""
+
+    def __len__(self):
+        assert len(self.bins) == len(self.xsecs)
+        return len(self.bins)
+
+    def __add__(self, other):
+        if isinstance(other, numbers.Real):
+            xsecs = [other + x for x in self.xsecs]
+            return mcfmhisto(self.obs, self.bins, self.xmin, self.xmax, self.bins, xsecs)
+        elif isinstance(other, mcfmhisto):
+            try:
+                if self.obs != other.obs or None:
+                    raise MixedObs
+                xsecs = [x + y for x, y in zip(self.xsecs, other.xsecs)]
+                return mcfmhisto(self.obs, self.bins, self.xmin, self.xmax, self.bins, xsecs)
+            except TypeError:
+                if self.xsecs is None and other.xsecs is None:
+                    return self
+                elif self.xsecs is None:
+                    return other
+                elif other.xsecs is None:
+                    return self
+                else:
+                    return Exception
+            except MixedObs:
+                return "You can't mix observables, this doesn't make sense"
+        else:
+            return NotImplemented
 
 ####  mcfm .dat output  ####
 
@@ -70,6 +104,9 @@ class mcfmhisto(object):
 ## Histogram Block
    # ...
 
+def parse_header(header_in):
+    pass
+
 def parse_histo(histo_in):
     try:
         obs_name, *data, integ, shots = histo_in
@@ -86,9 +123,13 @@ def parse_histo(histo_in):
         xmin = bins[0]
         xmax = bins[-1]
 
+        # currently unused
+        # avg, rms, integral = integ.split()
+        # entries, uflow, oflow = shots.split()
+
         return mcfmhisto(obs_name, nbins, xmin, xmax, bins, xsecs)
 
-    except:
+    except ValueError:
         return mcfmhisto(None, None, None, None, None, None)
 
 # helper functions
@@ -121,31 +162,4 @@ if __name__ == "__main__":
     # parse header
 
     # parse histograms
-    print(parse_histo(histograms[0]))
-
-    # with open("mcfmtest.dat", "r") as f:
-    #     for line in nonempty_lines(f):
-    #         # print(type(line), line)
-    #         # s = re.findall(r'\s\(.*?\)', line)    # this is what it should be if parens appeared properly
-    #         s = re.findall(r'\s\(.*?$', line)
-    #         if s:
-    #             print(s.pop())
-
-    #         if "HIST" in line:
-    #             hist = line
-    #             obs_name = f.readline()
-    #             print(hist)
-    #             print(obs_name)
-
-    #             while True:
-    #                 try:
-    #                     bin, xsec, xsecerr = f.readline().split()
-    #                     print(bin, xsec, xsecerr)
-    #                 except:
-    #                     break
-
-    #             avg, rms, integ = re.findall(r"[+-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)", f.readline())
-    #             print(avg, rms, integ)
-    #             f.readline()
-    #             entries, uflow, oflow = re.findall(r"\d+", f.readline())
-    #             print(entries, uflow, oflow)
+    print(parse_histo(histograms[0]) + parse_histo(histograms[0]))
