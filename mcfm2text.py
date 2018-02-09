@@ -142,7 +142,11 @@ class mcfmhisto(object):
             return mcfmhisto(self.obs, self.bins, self.xmin, self.xmax, self.bins, xsecs)
         elif isinstance(other, mcfmhisto):
             try:
-                if self.obs != other.obs or None:
+                if self.obs == None:
+                    pass
+                elif other.obs == None:
+                    pass
+                elif self.obs != other.obs:
                     raise MixedObs
                 xsecs = [x + y for x, y in zip(self.xsecs, other.xsecs)]
                 return mcfmhisto(self.obs, self.bins, self.xmin, self.xmax, self.bins, xsecs)
@@ -238,4 +242,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    args.func(args)
+    histograms = args.func(args)
+
+    for hist in histograms:
+        print(hist)
+
+    print(histograms[0])
+    print(histograms[55])
+    print(histograms[0] + histograms[55])
+    print(histograms[55] + histograms[0])
