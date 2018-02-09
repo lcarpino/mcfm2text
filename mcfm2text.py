@@ -302,6 +302,13 @@ class mcfmhisto(object):
         xsecs = [+x for x in self.xsecs]
         return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
 
+    def __pow__(self, other):
+        if isinstance(other, numbers.Real):
+            xsecs = [x**other for x in self.xsecs]
+            return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+        else:
+            return NotImplemented
+
     def __add__(self, other):
         if isinstance(other, numbers.Real):
             xsecs = [other + x for x in self.xsecs]
@@ -338,6 +345,43 @@ class mcfmhisto(object):
 
     def __rsub__(self, other):
         return -self + other
+
+    def __mul__(self, other):
+        if isinstance(other, numbers.Real):
+            xsecs = [other * x for x in self.xsecs]
+            return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+        elif isinstance(other, mcfmhisto):
+            try:
+                if self.obs == None:
+                    pass
+                elif other.obs == None:
+                    pass
+                elif self.obs != other.obs:
+                    raise MixedObs
+                xsecs = [x * y for x, y in zip(self.xsecs, other.xsecs)]
+                return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+            except TypeError:
+                if self.xsecs is None and other.xsecs is None:
+                    return self
+                elif self.xsecs is None:
+                    return other
+                elif other.xsecs is None:
+                    return self
+                else:
+                    return Exception
+            except MixedObs:
+                return "You can't mix observables, this doesn't make sense"
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        return self * other**-1
+
+    def __rtruediv__(self, other):
+        return self**-1 * other
 
 ############################################################
 ####                 Histogram Parsing                  ####
