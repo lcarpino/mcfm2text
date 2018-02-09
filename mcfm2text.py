@@ -346,11 +346,30 @@ def read_hists(mcfm_in):
         header, *histograms = per_section(nonempty_lines(f))
     return histograms
 
-def read_mcfmhisto(mcfmhisto):
-    with open(str(mcfmhisto), "r") as f:
+def read_mcfmhisto(mcfmhisto_in):
+    with open(str(mcfmhisto_in), "r") as f:
         header, histogram = per_section2(nonempty_lines(f))
-    print(header)
-    print(histogram)
+
+    ## Header
+    # removes "# " from strings, maybe I can do this without
+    # magic numbers
+    obs_name = header[1][2:]
+    nbins, xmin, xmax = header[3][2:].split()
+    nbins = int(nbins)
+    xmin = float(xmin)
+    xmax = float(xmax)
+
+    ## Data
+    bins = []
+    xsecs = []
+    for line in histogram:
+        bin, xsec = line.split()
+        bins.append(float(bin))
+        xsecs.append(float(xsec))
+
+    ## Footer
+
+    return mcfmhisto(obs_name, nbins, xmin, xmax, bins, xsecs)
 
 def nonempty_lines(f):
     for l in f:
@@ -389,7 +408,7 @@ def per_section2(it, is_head=lambda line: line.startswith("##"), is_tail=lambda 
 
 if __name__ == "__main__":
 
-    read_mcfmhisto("histogram-ptll_full")
+    print(read_mcfmhisto("histogram-ptll_full"))
 
     # args = parser.parse_args()
 
