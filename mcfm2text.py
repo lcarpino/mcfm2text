@@ -117,16 +117,21 @@ match_nlo.add_argument('-lo', '--leading_order',
                     dest='lo',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
 match_nlo.add_argument('-v', '--virt',
+                    required=True,
                     dest='virt',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
 match_nlo.add_argument('-r', '--real',
+                    required=True,
                     dest='real',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
 
 match_nlo_nll = match_subparsers.add_parser("nlo+nll",
@@ -239,13 +244,22 @@ class mcfmhisto(object):
         pass
 
     def __str__(self):
-        print(self.obs)
-        print(self.nbins)
-        print(self.xmin)
-        print(self.xmax)
-        print(self.bins)
-        print(self.xsecs)
-        return ""
+        pretty_histo = """## BEGIN HEADER
+# observable name:
+# {obs}
+# nbins\txmin\txmax
+# {nbins}        {xmin}        {xmax}
+## END HEADER
+## BEGIN HISTOGRAM
+""".format(obs=self.obs, nbins=self.nbins, xmin=self.xmin, xmax=self.xmax)
+        for bin, xsec in zip(self.bins, self.xsecs):
+            pretty_histo += "{:08.3f}\t{:014.10f}\n".format(bin, xsec)
+        pretty_histo += "## END HISTOGRAM"
+
+        return pretty_histo
+
+    def __format__(self):
+        pass
 
     def __len__(self):
         assert len(self.bins) == len(self.xsecs)
@@ -332,6 +346,12 @@ def read_hists(mcfm_in):
         header, *histograms = per_section(nonempty_lines(f))
     return histograms
 
+def read_mcfmhisto(mcfmhisto):
+    with open(str(mcfmhisto), "r") as f:
+        header, histogram = per_section2(nonempty_lines(f))
+    print(header)
+    print(histogram)
+
 def nonempty_lines(f):
     for l in f:
         line = l.rstrip()
@@ -350,21 +370,31 @@ def per_section(it, is_delimiter=lambda line: line.startswith("HIST")):
             ret.append(line)
     yield ret
 
-
+def per_section2(it, is_head=lambda line: line.startswith("##"), is_tail=lambda line: line.startswith("##")):
+    ret = []
+    record_mode = False
+    for line in it:
+        # remove leading and trailing spaces
+        line = line.rstrip().lstrip()
+        if not record_mode:
+            if is_head(line):
+                record_mode = True
+        elif is_tail(line):
+            yield ret
+            ret = []
+            record_mode = False
+        else:
+            ret.append(line)
 
 
 if __name__ == "__main__":
 
-    args = parser.parse_args()
+    read_mcfmhisto("histogram-ptll_full")
 
-    print(args)
+    # args = parser.parse_args()
 
-    histograms = args.func(args)
+    # histograms = args.func(args)
 
-    for hist in histograms:
-        print(hist)
-
-    print(histograms[0])
-    print(histograms[55])
-    print(histograms[0] + histograms[55])
-    print(histograms[55] + histograms[0])
+    # for hist in histograms:
+    #     with open(args.output + "-" + hist.obs, "w") as f:
+    #         f.write(str(hist))
