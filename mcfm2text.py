@@ -1,15 +1,63 @@
 #! /usr/bin/env python3
 
 from pathlib import Path
+from functools import reduce
+from operator import add
 import argparse
 import numbers
 import re
 
-# parser
-parser = argparse.ArgumentParser(description="""""")
-subparsers = parser.add_subparsers()
 
-parser_data  = subparsers.add_parser("histo_mk", help="")
+
+
+############################################################
+####                 Main Methods                       ####
+############################################################
+
+def histo_mk(args):
+    inputs = [Path(path) for path in args.input if Path(path).exists()]
+    ninputs = len(inputs)
+
+    # get mcfm output in list
+    mcfm_histos = [read_hists(mcfm_in) for mcfm_in in inputs]
+
+    try:
+        # get nested list of all histograms
+        all_histos = map(mcfm2hist, mcfm_histos)
+        # transpose for reduce call
+        all_histos_tp = list(map(lambda *sl : list(sl), *all_histos))
+        # Add together histograms with like observables
+        histos = [reduce(add, hist) for hist in all_histos_tp]
+    except TypeError:
+        print("No valid inputs found")
+        exit()
+
+    return histos
+
+def scale_var(args):
+    pass
+
+def match(args):
+    pass
+
+def delta(args):
+    pass
+
+
+
+
+############################################################
+####                       Parser                       ####
+############################################################
+
+parser = argparse.ArgumentParser(description="""""")
+subparsers = parser.add_subparsers(title="",
+                                   description="",
+                                   help="")
+
+parser_data  = subparsers.add_parser("histo_mk",
+                                     description="",
+                                     help="")
 parser_data.add_argument('input',
                     metavar='input(s)',
                     type=str,
@@ -29,12 +77,36 @@ parser_data.add_argument('--average',
                     histograms as sum over inputs divide the number of inputs.
                     One should use this if runs were performed in parallel, but
                     with the same setup""")
+parser.set_defaults(func=histo_mk)
 
 parser_scale = subparsers.add_parser("scale_var", help="")
 
 parser_match = subparsers.add_parser("match", help="")
 
 parser_delta = subparsers.add_parser("delta", help="")
+
+
+
+
+############################################################
+####                 Histogram Class                    ####
+############################################################
+
+####  mcfm .dat output 
+
+## Header information
+## Histogram Block
+   # newline
+   # HIST = number
+   # observable name
+   # data
+   # newline
+   # AVG RMS INTEGRAL
+   # newline
+   # ENTRIES O`FLOW U`FLOW
+   # newline
+## Histogram Block
+   # ...
 
 class MixedObs(Exception):
     pass
@@ -88,21 +160,12 @@ class mcfmhisto(object):
         else:
             return NotImplemented
 
-####  mcfm .dat output  ####
 
-## Header information
-## Histogram Block
-   # newline
-   # HIST = number
-   # observable name
-   # data
-   # newline
-   # AVG RMS INTEGRAL
-   # newline
-   # ENTRIES O`FLOW U`FLOW
-   # newline
-## Histogram Block
-   # ...
+
+
+############################################################
+####                 Histogram Parsing                  ####
+############################################################
 
 def parse_header(header_in):
     pass
@@ -132,7 +195,24 @@ def parse_histo(histo_in):
     except ValueError:
         return mcfmhisto(None, None, None, None, None, None)
 
-# helper functions
+
+
+
+############################################################
+####                 Helper Functions                   ####
+############################################################
+
+def mcfm2hist(mcfm_hist):
+    histlist = []
+    for enum, hist_elem in enumerate(mcfm_hist):
+        histlist.append(parse_histo(hist_elem))
+    return histlist
+
+def read_hists(mcfm_in):
+    with open(str(mcfm_in), "r") as f:
+        header, *histograms = per_section(nonempty_lines(f))
+    return histograms
+
 def nonempty_lines(f):
     for l in f:
         line = l.rstrip()
@@ -151,15 +231,11 @@ def per_section(it, is_delimiter=lambda line: line.startswith("HIST")):
             ret.append(line)
     yield ret
 
+
+
+
 if __name__ == "__main__":
 
-    # args = parser.parse_args()
+    args = parser.parse_args()
 
-    # parse input into header and separate histograms
-    with open("mcfmtest.dat", "r") as f:
-        header, *histograms = list(per_section(nonempty_lines(f)))
-
-    # parse header
-
-    # parse histograms
-    print(parse_histo(histograms[0]) + parse_histo(histograms[0]))
+    args.func(args)
