@@ -37,7 +37,36 @@ def histo_mk(args):
 def scale_var(args):
     pass
 
-def match(args):
+def match_nlo(args):
+    try:
+        lo_in = [Path(path) for path in args.lo if Path(path).exists()]
+        num_lo_in = len(lo_in)
+        virt_in = [Path(path) for path in args.virt if Path(path).exists()]
+        num_virt_in = len(virt_in)
+        real_in = [Path(path) for path in args.real if Path(path).exists()]
+        num_real_in = len(real_in)
+    except TypeError:
+        print("there need to be inputs for lo, virt and real")
+        exit()
+    except:
+        print("something weird and unexpected happened")
+        exit()
+
+    if num_lo_in == num_virt_in == num_real_in:
+        lo_histos = [read_mcfmhisto(hist_in) for hist_in in lo_in]
+        virt_histos = [read_mcfmhisto(hist_in) for hist_in in virt_in]
+        real_histos = [read_mcfmhisto(hist_in) for hist_in in real_in]
+    else:
+        print("Unequal numbers of inputs")
+        exit()
+
+    nlo_histos = [lo + virt + real for lo, virt, real in zip(lo_histos, virt_histos, real_histos)]
+    return nlo_histos
+
+def match_nlo_nll(args):
+    pass
+
+def match_nlo_nnll(args):
     pass
 
 def delta(args):
@@ -105,34 +134,34 @@ parser_scale.set_defaults(func=scale_var)
 parser_match = subparsers.add_parser("match",
                                      description="",
                                      help="")
-parser_match.set_defaults(func=match)
 match_subparsers = parser_match.add_subparsers(title="subcommands",
                                    description="des",
                                    help="help me")
 
-match_nlo = match_subparsers.add_parser("nlo",
+parser_match_nlo = match_subparsers.add_parser("nlo",
                                         description="",
                                         help="")
-match_nlo.add_argument('-lo', '--leading_order',
+parser_match_nlo.add_argument('-l', '--lo',
                     dest='lo',
                     type=str,
                     action='store',
                     nargs='+',
                     help='')
-match_nlo.add_argument('-v', '--virt',
+parser_match_nlo.add_argument('-v', '--virt',
                     required=True,
                     dest='virt',
                     type=str,
                     action='store',
                     nargs='+',
                     help='')
-match_nlo.add_argument('-r', '--real',
+parser_match_nlo.add_argument('-r', '--real',
                     required=True,
                     dest='real',
                     type=str,
                     action='store',
                     nargs='+',
                     help='')
+parser_match_nlo.set_defaults(func=match_nlo)
 
 match_nlo_nll = match_subparsers.add_parser("nlo+nll",
                                             description="",
@@ -268,7 +297,7 @@ class mcfmhisto(object):
     def __add__(self, other):
         if isinstance(other, numbers.Real):
             xsecs = [other + x for x in self.xsecs]
-            return mcfmhisto(self.obs, self.bins, self.xmin, self.xmax, self.bins, xsecs)
+            return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
         elif isinstance(other, mcfmhisto):
             try:
                 if self.obs == None:
@@ -278,7 +307,7 @@ class mcfmhisto(object):
                 elif self.obs != other.obs:
                     raise MixedObs
                 xsecs = [x + y for x, y in zip(self.xsecs, other.xsecs)]
-                return mcfmhisto(self.obs, self.bins, self.xmin, self.xmax, self.bins, xsecs)
+                return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
             except TypeError:
                 if self.xsecs is None and other.xsecs is None:
                     return self
@@ -408,11 +437,9 @@ def per_section2(it, is_head=lambda line: line.startswith("##"), is_tail=lambda 
 
 if __name__ == "__main__":
 
-    print(read_mcfmhisto("histogram-ptll_full"))
+    args = parser.parse_args()
 
-    # args = parser.parse_args()
-
-    # histograms = args.func(args)
+    histograms = args.func(args)
 
     # for hist in histograms:
     #     with open(args.output + "-" + hist.obs, "w") as f:
