@@ -77,11 +77,126 @@ parser_data.add_argument('--average',
                     histograms as sum over inputs divide the number of inputs.
                     One should use this if runs were performed in parallel, but
                     with the same setup""")
-parser.set_defaults(func=histo_mk)
+parser_data.set_defaults(func=histo_mk)
 
-parser_scale = subparsers.add_parser("scale_var", help="")
+parser_scale = subparsers.add_parser("scale_var",
+                                     description="",
+                                     help="")
+parser_scale.add_argument('input',
+                    metavar='input(s)',
+                    type=str,
+                    action='store',
+                    nargs='+',
+                    help="mcfm histogram file(s) to be processed")
+parser_scale.add_argument('-o', '--output',
+                    dest='output',
+                    type=str,
+                    action='store',
+                    default='histogram',
+                    help="""The prefix that is attached at the start of the
+                    output filename""")
+parser_scale.add_argument('-c', '--central',
+                    dest='central',
+                    type=str,
+                    action='store',
+                    help="the histograms of the central scale")
+parser_scale.set_defaults(func=scale_var)
 
-parser_match = subparsers.add_parser("match", help="")
+parser_match = subparsers.add_parser("match",
+                                     description="",
+                                     help="")
+parser_match.set_defaults(func=match)
+match_subparsers = parser_match.add_subparsers(title="subcommands",
+                                   description="des",
+                                   help="help me")
+
+match_nlo = match_subparsers.add_parser("nlo",
+                                        description="",
+                                        help="")
+match_nlo.add_argument('-lo', '--leading_order',
+                    dest='lo',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo.add_argument('-v', '--virt',
+                    dest='virt',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo.add_argument('-r', '--real',
+                    dest='real',
+                    type=str,
+                    action='store',
+                    help='')
+
+match_nlo_nll = match_subparsers.add_parser("nlo+nll",
+                                            description="",
+                                            help="")
+match_nlo_nll.add_argument('-lo', '--leading_order',
+                    dest='lo',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo_nll.add_argument('-v', '--virt',
+                    dest='virt',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo_nll.add_argument('-r', '--real',
+                    dest='real',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo_nll.add_argument('--nll',
+                    dest='nll',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo_nll.add_argument('--nllexpd',
+                    dest='nllexpd',
+                    type=str,
+                    action='store',
+                    help='')
+
+match_nlo_nnll = match_subparsers.add_parser("nlo+nnll",
+                                            description="",
+                                            help="")
+match_nlo_nnll.add_argument('-lo', '--leading_order',
+                    dest='lo',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo_nnll.add_argument('-v', '--virt',
+                    dest='virt',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo_nnll.add_argument('-r', '--real',
+                    dest='real',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo_nnll.add_argument('--nnll',
+                    dest='nnll',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo_nnll.add_argument('--nnllexpd',
+                    dest='nnllexpd',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo_nnll.add_argument('--lumi0',
+                    dest='lumi0',
+                    type=str,
+                    action='store',
+                    help='')
+match_nlo_nnll.add_argument('--lumi1',
+                    dest='lumi1',
+                    type=str,
+                    action='store',
+                    help='')
+
 
 parser_delta = subparsers.add_parser("delta", help="")
 
@@ -241,6 +356,8 @@ def per_section(it, is_delimiter=lambda line: line.startswith("HIST")):
 if __name__ == "__main__":
 
     args = parser.parse_args()
+
+    print(args)
 
     histograms = args.func(args)
 
