@@ -294,6 +294,14 @@ class mcfmhisto(object):
         assert len(self.bins) == len(self.xsecs)
         return len(self.bins)
 
+    def __neg__(self):
+        xsecs = [-x for x in self.xsecs]
+        return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+
+    def __pos__(self):
+        xsecs = [+x for x in self.xsecs]
+        return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+
     def __add__(self, other):
         if isinstance(other, numbers.Real):
             xsecs = [other + x for x in self.xsecs]
@@ -322,8 +330,14 @@ class mcfmhisto(object):
         else:
             return NotImplemented
 
+    def __radd__(self, other):
+        return self.__add__(other)
 
+    def __sub__(self, other):
+        return self + -other
 
+    def __rsub__(self, other):
+        return -self + other
 
 ############################################################
 ####                 Histogram Parsing                  ####
