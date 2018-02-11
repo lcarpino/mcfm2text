@@ -35,6 +35,14 @@ def histo_mk(args):
     return histos
 
 def scale_var(args):
+    inputs = [Path(path) for path in args.input if Path(path).exists()]
+    ninputs = len(inputs)
+
+    # need truth values for min/max of mcfmhistos
+    # how do we get it on a bin by bin basis? and, more importantly,
+    # is this a sensible thing to return. Most of Python has single
+    # truth values. Maybe the all keyword?
+
     pass
 
 def match_nlo(args):
@@ -299,7 +307,7 @@ parser_match_nlo_nll.add_argument('-o', '--output',
                     default='histogram',
                     help="""The prefix that is attached at the start of the
                     output filename""")
-parser_match_nlo_nnll.set_defaults(func=match_nlo_nll)
+parser_match_nlo_nll.set_defaults(func=match_nlo_nll)
 
 parser_match_nlo_nnll = match_subparsers.add_parser("nlo+nnll",
                                             description="",
@@ -314,7 +322,7 @@ parser_match_nlo_nnll.add_argument('-v', '--virt',
                     dest='virt',
                     type=str,
                     action='store',
-                    nargs='+', 
+                    nargs='+',
                     help='')
 parser_match_nlo_nnll.add_argument('-r', '--real',
                     dest='real',
@@ -427,7 +435,10 @@ class mcfmhisto(object):
 
     def __pow__(self, other):
         if isinstance(other, numbers.Real):
-            xsecs = [x**other for x in self.xsecs]
+            # catch negative powers of zero that would give divide by zero exceptions
+            # we tactically assume that this errors always comes from the matching
+            # where we have expressions like 0*(1 + 0/0) which is well defined
+            xsecs = [0.0 if x == 0 and other <= 0 else x**other for x in self.xsecs]
             return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
         else:
             return NotImplemented
