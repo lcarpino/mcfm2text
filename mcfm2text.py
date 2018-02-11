@@ -38,10 +38,26 @@ def scale_var(args):
     inputs = [Path(path) for path in args.input if Path(path).exists()]
     ninputs = len(inputs)
 
+    # maybe I should just have central as the 1st position argument
+    # and then the others are all optional, then every comparison is
+    # just against the central one i.e. checks of the correct variable
+
     # need truth values for min/max of mcfmhistos
     # how do we get it on a bin by bin basis? and, more importantly,
     # is this a sensible thing to return. Most of Python has single
     # truth values. Maybe the all keyword?
+
+    # central scale and all other scales
+    try:
+        central = read_mcfmhisto(args.central)
+        mcfm_histos = [read_mcfmhisto(hist_in) for hist_in in inputs]
+        all_histos = central + mcfm_histos
+    except:
+        # think about exceptions here
+        pass
+
+    # if central scale provided we should check all the observables match
+    # otherwise up to the user to sort this
 
     pass
 
