@@ -39,11 +39,14 @@ def scale_var(args):
 
 def match_nlo(args):
     try:
+        # inputs
         lo_in = [Path(path) for path in args.lo if Path(path).exists()]
-        num_lo_in = len(lo_in)
         virt_in = [Path(path) for path in args.virt if Path(path).exists()]
-        num_virt_in = len(virt_in)
         real_in = [Path(path) for path in args.real if Path(path).exists()]
+
+        # number of inputs for consistency checks
+        num_lo_in = len(lo_in)
+        num_virt_in = len(virt_in)
         num_real_in = len(real_in)
     except TypeError:
         print("there need to be inputs for lo, virt and real")
@@ -53,21 +56,107 @@ def match_nlo(args):
         exit()
 
     if num_lo_in == num_virt_in == num_real_in:
+        # histograms from inputs
         lo_histos = [read_mcfmhisto(hist_in) for hist_in in lo_in]
         virt_histos = [read_mcfmhisto(hist_in) for hist_in in virt_in]
         real_histos = [read_mcfmhisto(hist_in) for hist_in in real_in]
+
+        # derived histograms
+        nlo_histos = [lo + virt + real for lo, virt, real in zip(lo_histos, virt_histos, real_histos)]
     else:
         print("Unequal numbers of inputs")
         exit()
 
-    nlo_histos = [lo + virt + real for lo, virt, real in zip(lo_histos, virt_histos, real_histos)]
     return nlo_histos
 
 def match_nlo_nll(args):
-    pass
+    try:
+        # inputs
+        lo_in = [Path(path) for path in args.lo if Path(path).exists()]
+        virt_in = [Path(path) for path in args.virt if Path(path).exists()]
+        real_in = [Path(path) for path in args.real if Path(path).exists()]
+        nll_in = [Path(path) for path in args.nnll if Path(path).exists()]
+        nllexpd_in = [Path(path) for path in args.nnllexpd if Path(path).exists()]
+
+        # number of inputs for consistency checks
+        num_lo_in = len(lo_in)
+        num_virt_in = len(virt_in)
+        num_real_in = len(real_in)
+        num_nll_in = len(nnll_in)
+        num_nllexpd_in = len(nnllexpd_in)
+    except TypeError:
+        print("there need to be inputs for lo, virt and real")
+        exit()
+    except:
+        print("something weird and unexpected happened")
+        exit()
+
+    if num_lo_in == num_virt_in == num_real_in == num_nll_in == num_nllexpd_in:
+        # histograms from inputs
+        lo_histos = [read_mcfmhisto(hist_in) for hist_in in lo_in]
+        virt_histos = [read_mcfmhisto(hist_in) for hist_in in virt_in]
+        real_histos = [read_mcfmhisto(hist_in) for hist_in in real_in]
+        nll_histos = [read_mcfmhisto(hist_in) for hist_in in nnll_in]
+        nll1_histos = [read_mcfmhisto(hist_in) for hist_in in nnllexpd_in]
+
+        # derived histograms
+        nlo1_histos = [virt + real for virt, real in zip(virt_histos, real_histos)]
+
+        matched_histos = [nll*(1 + (nlo1-nll1)/lo) for lo, nlo1, nll, nll1 in
+                          zip(lo_histos, nlo1_histos, nll_histos, nll1_histos)]
+    else:
+        print("Unequal numbers of inputs")
+        exit()
+
+    return matched_histos
 
 def match_nlo_nnll(args):
-    pass
+    try:
+        # inputs
+        lo_in = [Path(path) for path in args.lo if Path(path).exists()]
+        virt_in = [Path(path) for path in args.virt if Path(path).exists()]
+        real_in = [Path(path) for path in args.real if Path(path).exists()]
+        nnll_in = [Path(path) for path in args.nnll if Path(path).exists()]
+        nnllexpd_in = [Path(path) for path in args.nnllexpd if Path(path).exists()]
+        lumi0_in = [Path(path) for path in args.lumi0 if Path(path).exists()]
+        lumi1_in = [Path(path) for path in args.lumi1 if Path(path).exists()]
+
+        # number of inputs for consistency checks
+        num_lo_in = len(lo_in)
+        num_virt_in = len(virt_in)
+        num_real_in = len(real_in)
+        num_nnll_in = len(nnll_in)
+        num_nnllexpd_in = len(nnllexpd_in)
+        num_lumi0_in = len(lumi0_in)
+        num_lumi1_in = len(lumi1_in)
+    except TypeError:
+        print("there need to be inputs for lo, virt and real")
+        exit()
+    except:
+        print("something weird and unexpected happened")
+        exit()
+
+    if num_lo_in == num_virt_in == num_real_in == num_nnll_in == num_nnllexpd_in == num_lumi0_in == num_lumi1_in:
+        # histograms from inputs
+        lo_histos = [read_mcfmhisto(hist_in) for hist_in in lo_in]
+        virt_histos = [read_mcfmhisto(hist_in) for hist_in in virt_in]
+        real_histos = [read_mcfmhisto(hist_in) for hist_in in real_in]
+        nnll_histos = [read_mcfmhisto(hist_in) for hist_in in nnll_in]
+        nnll1_histos = [read_mcfmhisto(hist_in) for hist_in in nnllexpd_in]
+        lumi0_histos = [read_mcfmhisto(hist_in) for hist_in in lumi0_in]
+        lumi1_histos = [read_mcfmhisto(hist_in) for hist_in in lumi1_in]
+
+        # derived histograms
+        dlumi_histos = [lumi1/lumi0 for lumi0, lumi1 in zip(lumi0_histos, lumi1_histos)]
+        nlo1_histos = [virt + real for virt, real in zip(virt_histos, real_histos)]
+
+        matched_histos = [nnll*(1 + (nlo1-nnll1)/(lo*(1+dlumi))) for lo, nlo1, nnll, nnll1, dlumi in
+                          zip(lo_histos, nlo1_histos, nnll_histos, nnll1_histos, dlumi_histos)]
+    else:
+        print("Unequal numbers of inputs")
+        exit()
+
+    return matched_histos
 
 def delta(args):
     pass
@@ -161,76 +250,110 @@ parser_match_nlo.add_argument('-r', '--real',
                     action='store',
                     nargs='+',
                     help='')
+parser_match_nlo.add_argument('-o', '--output',
+                    dest='output',
+                    type=str,
+                    action='store',
+                    default='histogram',
+                    help="""The prefix that is attached at the start of the
+                    output filename""")
 parser_match_nlo.set_defaults(func=match_nlo)
 
-match_nlo_nll = match_subparsers.add_parser("nlo+nll",
+parser_match_nlo_nll = match_subparsers.add_parser("nlo+nll",
                                             description="",
                                             help="")
-match_nlo_nll.add_argument('-lo', '--leading_order',
+parser_match_nlo_nll.add_argument('-l', '--lo',
                     dest='lo',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
-match_nlo_nll.add_argument('-v', '--virt',
+parser_match_nlo_nll.add_argument('-v', '--virt',
                     dest='virt',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
-match_nlo_nll.add_argument('-r', '--real',
+parser_match_nlo_nll.add_argument('-r', '--real',
                     dest='real',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
-match_nlo_nll.add_argument('--nll',
+parser_match_nlo_nll.add_argument('--nll',
                     dest='nll',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
-match_nlo_nll.add_argument('--nllexpd',
+parser_match_nlo_nll.add_argument('--nllexpd',
                     dest='nllexpd',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
+parser_match_nlo_nll.add_argument('-o', '--output',
+                    dest='output',
+                    type=str,
+                    action='store',
+                    default='histogram',
+                    help="""The prefix that is attached at the start of the
+                    output filename""")
+parser_match_nlo_nnll.set_defaults(func=match_nlo_nll)
 
-match_nlo_nnll = match_subparsers.add_parser("nlo+nnll",
+parser_match_nlo_nnll = match_subparsers.add_parser("nlo+nnll",
                                             description="",
                                             help="")
-match_nlo_nnll.add_argument('-lo', '--leading_order',
+parser_match_nlo_nnll.add_argument('-l', '--lo',
                     dest='lo',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
-match_nlo_nnll.add_argument('-v', '--virt',
+parser_match_nlo_nnll.add_argument('-v', '--virt',
                     dest='virt',
                     type=str,
                     action='store',
+                    nargs='+', 
                     help='')
-match_nlo_nnll.add_argument('-r', '--real',
+parser_match_nlo_nnll.add_argument('-r', '--real',
                     dest='real',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
-match_nlo_nnll.add_argument('--nnll',
+parser_match_nlo_nnll.add_argument('--nnll',
                     dest='nnll',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
-match_nlo_nnll.add_argument('--nnllexpd',
+parser_match_nlo_nnll.add_argument('--nnllexpd',
                     dest='nnllexpd',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
-match_nlo_nnll.add_argument('--lumi0',
+parser_match_nlo_nnll.add_argument('--lumi0',
                     dest='lumi0',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
-match_nlo_nnll.add_argument('--lumi1',
+parser_match_nlo_nnll.add_argument('--lumi1',
                     dest='lumi1',
                     type=str,
                     action='store',
+                    nargs='+',
                     help='')
-
+parser_match_nlo_nnll.add_argument('-o', '--output',
+                    dest='output',
+                    type=str,
+                    action='store',
+                    default='histogram',
+                    help="""The prefix that is attached at the start of the
+                    output filename""")
+parser_match_nlo_nnll.set_defaults(func=match_nlo_nnll)
 
 parser_delta = subparsers.add_parser("delta", help="")
 
@@ -499,6 +622,6 @@ if __name__ == "__main__":
 
     histograms = args.func(args)
 
-    # for hist in histograms:
-    #     with open(args.output + "-" + hist.obs, "w") as f:
-    #         f.write(str(hist))
+    for hist in histograms:
+        with open(args.output + "-" + hist.obs, "w") as f:
+            f.write(str(hist))
