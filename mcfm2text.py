@@ -35,26 +35,33 @@ def histo_mk(args):
     return histos
 
 def scale_var(args):
-    central = Path(args.central_scale)
+    central   = [Path(path) for path in args.central_scale
+                 if Path(path).exists()]
     variation = [Path(path) for path in args.variation_scales
                  if Path(path).exists()]
 
     try:
-        cen_hist = read_mcfmhisto(central)
+        cen_hist = [read_mcfmhisto(hist_in) for hist_in in central]
         var_hist = [read_mcfmhisto(hist_in) for hist_in in variation]
-        all_hist = [cen_hist] + var_hist
+
+        # match up like observables
+        all_hist = [ [cen] + [var for var in var_hist if var.obs == cen.obs]
+                     for cen in cen_hist ]
     except:
         pass
 
     # extract min and max values
-    min_scale = [min(xsec_tup) for xsec_tup in
-                 zip(*[hist.xsecs for hist in all_hist])]
-    max_scale = [max(xsec_tup) for xsec_tup in
-                 zip(*[hist.xsecs for hist in all_hist])]
+    min_scale = [ [min(xsec_tup) for xsec_tup in
+                   zip(*[hist.xsecs for hist in obs])]
+                  for obs in all_hist ]
 
-    return [scalehisto(cen_hist.obs, cen_hist.nbins, cen_hist.xmin, cen_hist.xmax,
-                      cen_hist.bins, cen_hist.xsecs, min_scale, max_scale)]
+    max_scale = [ [max(xsec_tup) for xsec_tup in
+                 zip(*[hist.xsecs for hist in obs])]
+                  for obs in all_hist ]
 
+    return [scalehisto(cen.obs, cen.nbins, cen.xmin, cen.xmax,
+                       cen.bins, cen.xsecs, mini, maxi)
+            for cen, mini, maxi in zip(cen_hist, min_scale, max_scale)]
 
 def match_nlo(args):
     try:
@@ -219,12 +226,14 @@ parser_data.set_defaults(func=histo_mk)
 parser_scale = subparsers.add_parser("scale_var",
                                      description="",
                                      help="")
-parser_scale.add_argument('central_scale',
+parser_scale.add_argument('-sc', '--central_scale',
                     metavar='central scale',
                     type=str,
                     action='store',
-                    help="mcfm histogram file for the central scale")
-parser_scale.add_argument('variation_scales',
+                    nargs='+',
+                    help="""mcfm histogram file(s) for a given set of
+                    observables that consistitute the central scale""")
+parser_scale.add_argument('-vs', '--variation_scales',
                     metavar='variation scale input(s)',
                     type=str,
                     action='store',
@@ -413,7 +422,8 @@ class mcfmhisto(object):
         self.xsecs = xsecs
 
     def __repr__(self):
-        pass
+        return "hist blah"
+        # pass
 
     def __str__(self):
         pretty_histo = """## BEGIN HEADER
