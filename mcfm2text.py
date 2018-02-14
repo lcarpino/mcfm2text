@@ -35,31 +35,26 @@ def histo_mk(args):
     return histos
 
 def scale_var(args):
-    inputs = [Path(path) for path in args.input if Path(path).exists()]
-    ninputs = len(inputs)
+    central = Path(args.central_scale)
+    variation = [Path(path) for path in args.variation_scales
+                 if Path(path).exists()]
 
-    # maybe I should just have central as the 1st position argument
-    # and then the others are all optional, then every comparison is
-    # just against the central one i.e. checks of the correct variable
-
-    # need truth values for min/max of mcfmhistos
-    # how do we get it on a bin by bin basis? and, more importantly,
-    # is this a sensible thing to return. Most of Python has single
-    # truth values. Maybe the all keyword?
-
-    # central scale and all other scales
     try:
-        central = read_mcfmhisto(args.central)
-        mcfm_histos = [read_mcfmhisto(hist_in) for hist_in in inputs]
-        all_histos = central + mcfm_histos
+        cen_hist = read_mcfmhisto(central)
+        var_hist = [read_mcfmhisto(hist_in) for hist_in in variation]
+        all_hist = [cen_hist] + var_hist
     except:
-        # think about exceptions here
         pass
 
-    # if central scale provided we should check all the observables match
-    # otherwise up to the user to sort this
+    # extract min and max values
+    min_scale = [min(xsec_tup) for xsec_tup in
+                 zip(*[hist.xsecs for hist in all_hist])]
+    max_scale = [max(xsec_tup) for xsec_tup in
+                 zip(*[hist.xsecs for hist in all_hist])]
 
-    pass
+    return [scalehisto(cen_hist.obs, cen_hist.nbins, cen_hist.xmin, cen_hist.xmax,
+                      cen_hist.bins, cen_hist.xsecs, min_scale, max_scale)]
+
 
 def match_nlo(args):
     try:
@@ -224,12 +219,18 @@ parser_data.set_defaults(func=histo_mk)
 parser_scale = subparsers.add_parser("scale_var",
                                      description="",
                                      help="")
-parser_scale.add_argument('input',
-                    metavar='input(s)',
+parser_scale.add_argument('central_scale',
+                    metavar='central scale',
                     type=str,
                     action='store',
-                    nargs='+',
-                    help="mcfm histogram file(s) to be processed")
+                    help="mcfm histogram file for the central scale")
+parser_scale.add_argument('variation_scales',
+                    metavar='variation scale input(s)',
+                    type=str,
+                    action='store',
+                    nargs='*',
+                    help="""mcfm histogram file(s) that constitute the scale
+                    variations to be performed""")
 parser_scale.add_argument('-o', '--output',
                     dest='output',
                     type=str,
@@ -237,11 +238,6 @@ parser_scale.add_argument('-o', '--output',
                     default='histogram',
                     help="""The prefix that is attached at the start of the
                     output filename""")
-parser_scale.add_argument('-c', '--central',
-                    dest='central',
-                    type=str,
-                    action='store',
-                    help="the histograms of the central scale")
 parser_scale.set_defaults(func=scale_var)
 
 parser_match = subparsers.add_parser("match",
@@ -532,6 +528,35 @@ class mcfmhisto(object):
 
     def __rtruediv__(self, other):
         return self**-1 * other
+
+class scalehisto(object):
+    def __init__(self, obs, nbins, xmin, xmax, bins, central_scale, min_scale, max_scale):
+        self.obs = obs
+        self.nbins = nbins
+        self.xmin = xmin
+        self.xmax = xmax
+        self.bins = bins
+        self.central_scale = central_scale
+        self.min_scale = min_scale
+        self.max_scale = max_scale
+
+    def __str__(self):
+        pretty_histo = """## BEGIN HEADER
+# observable name:
+# {obs}
+# nbins\txmin\txmax
+# {nbins}        {xmin}        {xmax}
+## END HEADER
+## BEGIN HISTOGRAM
+""".format(obs=self.obs, nbins=self.nbins, xmin=self.xmin, xmax=self.xmax)
+        for bin, cen, mini, maxi in zip(self.bins, self.central_scale, self.min_scale, self.max_scale):
+            pretty_histo += "{:08.3f}\t{:014.10f}\t{:014.10f}\t{:014.10f}\n".format(bin, cen, mini, maxi)
+        pretty_histo += "## END HISTOGRAM"
+
+        return pretty_histo
+
+
+
 
 ############################################################
 ####                 Histogram Parsing                  ####
