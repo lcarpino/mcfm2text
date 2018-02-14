@@ -99,15 +99,15 @@ def match_nlo_nll(args):
         lo_in = [Path(path) for path in args.lo if Path(path).exists()]
         virt_in = [Path(path) for path in args.virt if Path(path).exists()]
         real_in = [Path(path) for path in args.real if Path(path).exists()]
-        nll_in = [Path(path) for path in args.nnll if Path(path).exists()]
-        nllexpd_in = [Path(path) for path in args.nnllexpd if Path(path).exists()]
+        nll_in = [Path(path) for path in args.nll if Path(path).exists()]
+        nllexpd_in = [Path(path) for path in args.nllexpd if Path(path).exists()]
 
         # number of inputs for consistency checks
         num_lo_in = len(lo_in)
         num_virt_in = len(virt_in)
         num_real_in = len(real_in)
-        num_nll_in = len(nnll_in)
-        num_nllexpd_in = len(nnllexpd_in)
+        num_nll_in = len(nll_in)
+        num_nllexpd_in = len(nllexpd_in)
     except TypeError:
         print("there need to be inputs for lo, virt and real")
         exit()
@@ -120,8 +120,8 @@ def match_nlo_nll(args):
         lo_histos = [read_mcfmhisto(hist_in) for hist_in in lo_in]
         virt_histos = [read_mcfmhisto(hist_in) for hist_in in virt_in]
         real_histos = [read_mcfmhisto(hist_in) for hist_in in real_in]
-        nll_histos = [read_mcfmhisto(hist_in) for hist_in in nnll_in]
-        nll1_histos = [read_mcfmhisto(hist_in) for hist_in in nnllexpd_in]
+        nll_histos = [read_mcfmhisto(hist_in) for hist_in in nll_in]
+        nll1_histos = [read_mcfmhisto(hist_in) for hist_in in nllexpd_in]
 
         # derived histograms
         nlo1_histos = [virt + real for virt, real in zip(virt_histos, real_histos)]
