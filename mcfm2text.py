@@ -461,7 +461,7 @@ parser_match_nlo_nnll.add_argument('-o', '--output',
                     output filename""")
 parser_match_nlo_nnll.set_defaults(func=match_nlo_nnll)
 
-parser_efficiency = match_subparsers.add_parser("efficiency",
+parser_efficiency = subparsers.add_parser("efficiency",
                                             description="",
                                             help="")
 parser_efficiency.add_argument('-c', '--with_cuts',
