@@ -50,14 +50,32 @@ def scale_var(args):
     except:
         pass
 
+    # central scale
+    cen_scale = [ cen.xsecs for cen in cen_hist]
+
     # extract min and max values
     min_scale = [ [min(xsec_tup) for xsec_tup in
                    zip(*[hist.xsecs for hist in obs])]
                   for obs in all_hist ]
 
     max_scale = [ [max(xsec_tup) for xsec_tup in
-                 zip(*[hist.xsecs for hist in obs])]
+                   zip(*[hist.xsecs for hist in obs])]
                   for obs in all_hist ]
+
+    # if we want symmetric error bands need to compute the maximum that the
+    # envelope differs from the central value.
+    if args.symmetric:
+        # calculate the absolute error of the symmetric bands
+        sym_scale = [ [max(abs(mxb - cb), abs(mnb - cb)) for cb, mnb, mxb
+                       in zip(cen, mini, maxi)]
+                       for cen, mini, maxi in zip(cen_scale, min_scale, max_scale) ]
+
+        # reconstruct min_scale with the symmetric error band
+        min_scale = [ [cb - mnb for cb, mnb in zip(cen, sym)]
+                      for cen, sym in zip(cen_scale, sym_scale)]
+
+        max_scale = [ [cb + mxb for cb, mxb in zip(cen, sym)]
+                      for cen, sym in zip(cen_scale, sym_scale)]
 
     return [scalehisto(cen.obs, cen.nbins, cen.xmin, cen.xmax,
                        cen.bins, cen.xsecs, mini, maxi)
@@ -226,20 +244,23 @@ parser_data.set_defaults(func=histo_mk)
 parser_scale = subparsers.add_parser("scale_var",
                                      description="",
                                      help="")
-parser_scale.add_argument('-sc', '--central_scale',
-                    metavar='central scale',
+parser_scale.add_argument('-cs', '--central_scale',
                     type=str,
                     action='store',
                     nargs='+',
                     help="""mcfm histogram file(s) for a given set of
                     observables that consistitute the central scale""")
 parser_scale.add_argument('-vs', '--variation_scales',
-                    metavar='variation scale input(s)',
                     type=str,
                     action='store',
                     nargs='*',
                     help="""mcfm histogram file(s) that constitute the scale
                     variations to be performed""")
+parser_scale.add_argument('-s', '--symmetric',
+                    dest='symmetric',
+                    action='store_true',
+                    help="""Symmetrise the uncertainty bands by taking
+                    the maximum of the upper and lower uncertainties""")
 parser_scale.add_argument('-o', '--output',
                     dest='output',
                     type=str,
