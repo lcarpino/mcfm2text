@@ -155,6 +155,7 @@ def match_nlo_nll(args):
     return matched_histos
 
 def match_nlo_nnll(args):
+    # assume the default of scheme a throughout
     try:
         # inputs
         lo_in = [Path(path) for path in args.lo if Path(path).exists()]
@@ -164,6 +165,8 @@ def match_nlo_nnll(args):
         nnllexpd_in = [Path(path) for path in args.nnllexpd if Path(path).exists()]
         lumi0_in = [Path(path) for path in args.lumi0 if Path(path).exists()]
         lumi1_in = [Path(path) for path in args.lumi1 if Path(path).exists()]
+        if args.scheme == "b":
+            real_incl_in = [Path(path) for path in args.real_inclusive if Path(path).exists]
 
         # number of inputs for consistency checks
         num_lo_in = len(lo_in)
@@ -173,6 +176,8 @@ def match_nlo_nnll(args):
         num_nnllexpd_in = len(nnllexpd_in)
         num_lumi0_in = len(lumi0_in)
         num_lumi1_in = len(lumi1_in)
+        if args.scheme == "b":
+            num_real_incl_in = len(real_incl_in)
     except TypeError:
         print("there need to be inputs for lo, virt and real")
         exit()
@@ -192,13 +197,23 @@ def match_nlo_nnll(args):
 
         # derived histograms
         dlumi_histos = [lumi1/lumi0 for lumi0, lumi1 in zip(lumi0_histos, lumi1_histos)]
-        nlo1_histos = [virt + real for virt, real in zip(virt_histos, real_histos)]
+        Sigma1_histos = [virt + real for virt, real in zip(virt_histos, real_histos)]
 
-        matched_histos = [nnll*(1 + (nlo1-nnll1)/(lo*(1+dlumi))) for lo, nlo1, nnll, nnll1, dlumi in
-                          zip(lo_histos, nlo1_histos, nnll_histos, nnll1_histos, dlumi_histos)]
+        matched_histos = [nnll*(1 + (Sigma1-nnll1)/(lo*(1+dlumi))) for lo, Sigma1, nnll, nnll1, dlumi in
+                          zip(lo_histos, Sigma1_histos, nnll_histos, nnll1_histos, dlumi_histos)]
     else:
         print("Unequal numbers of inputs")
         exit()
+
+    if args.scheme == "b":
+        if num_real_incl_in == num_lo_in:
+            real_incl_histos = [read_mcfmhisto(hist_in) for hist_in in real_incl_in]
+
+            sigma1_histos = [virt + real for virt, real in zip(virt_histos, real_incl_histos)]
+
+            matched_histos = [ma - sigma1*nnll/(lo*(1+dlumi))
+                              for ma, lo, sigma1, nnll, dlumi in
+                              zip(matched_histos, lo_histos, sigma1_histos, nnll_histos, dlumi_histos)]
 
     return matched_histos
 
@@ -342,6 +357,13 @@ parser_match_nlo_nll.add_argument('--nllexpd',
                     action='store',
                     nargs='+',
                     help='')
+parser_match_nlo_nll.add_argument('-ri', '--real_inclusive',
+                    dest='real_inclusive',
+                    type=str,
+                    action='store',
+                    nargs='+',
+                    help="""The inclusive real cross section with no constraints
+                    on QCD radiation applied, only necessary for scheme 'b'""")
 parser_match_nlo_nll.add_argument('-o', '--output',
                     dest='output',
                     type=str,
@@ -354,6 +376,13 @@ parser_match_nlo_nll.set_defaults(func=match_nlo_nll)
 parser_match_nlo_nnll = match_subparsers.add_parser("nlo+nnll",
                                             description="",
                                             help="")
+parser_match_nlo_nnll.add_argument('-s', '--scheme',
+                    dest='scheme',
+                    type=str,
+                    action='store',
+                    default='a',
+                    choices=['a', 'b'],
+                    help="""""")
 parser_match_nlo_nnll.add_argument('-l', '--lo',
                     dest='lo',
                     type=str,
@@ -396,6 +425,13 @@ parser_match_nlo_nnll.add_argument('--lumi1',
                     action='store',
                     nargs='+',
                     help='')
+parser_match_nlo_nnll.add_argument('-ri', '--real_inclusive',
+                    dest='real_inclusive',
+                    type=str,
+                    action='store',
+                    nargs='+',
+                    help="""The inclusive real cross section with no constraints
+                    on QCD radiation applied, only necessary for scheme 'b'""")
 parser_match_nlo_nnll.add_argument('-o', '--output',
                     dest='output',
                     type=str,
