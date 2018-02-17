@@ -217,6 +217,26 @@ def match_nlo_nnll(args):
 
     return matched_histos
 
+def efficiency(args):
+    vetoed    = [Path(path) for path in args.vetoed
+                 if Path(path).exists()]
+    inclusive = [Path(path) for path in args.inclusive
+                 if Path(path).exists()]
+
+    try:
+        veto_hist = [read_mcfmhisto(hist_in) for hist_in in vetoed]
+        incl_hist = [read_mcfmhisto(hist_in) for hist_in in inclusive]
+
+        # have a check to make sure observables align and there are
+        # equal numbers of inputs?
+    except:
+        pass
+
+    # efficiency
+    eff = [ veto/incl for veto, incl in zip(veto_hist, incl_hist) ]
+
+    return eff
+
 def delta(args):
     pass
 
@@ -440,6 +460,30 @@ parser_match_nlo_nnll.add_argument('-o', '--output',
                     help="""The prefix that is attached at the start of the
                     output filename""")
 parser_match_nlo_nnll.set_defaults(func=match_nlo_nnll)
+
+parser_efficiency = match_subparsers.add_parser("efficiency",
+                                            description="",
+                                            help="")
+parser_efficiency.add_argument('-c', '--with_cuts',
+                    dest='vetoed',
+                    type=str,
+                    action='store',
+                    nargs='+',
+                    help="""""")
+parser_efficiency.add_argument('-i', '--inclusive',
+                    dest='inclusive',
+                    type=str,
+                    action='store',
+                    nargs='+',
+                    help="""""")
+parser_efficiency.add_argument('-o', '--output',
+                    dest='output',
+                    type=str,
+                    action='store',
+                    default='histogram',
+                    help="""The prefix that is attached at the start of the
+                    output filename""")
+parser_efficiency.set_defaults(func=efficiency)
 
 parser_delta = subparsers.add_parser("delta", help="")
 
