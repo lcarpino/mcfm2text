@@ -68,7 +68,8 @@ def scale_var(args):
         # calculate the absolute error of the symmetric bands
         sym_scale = [ [max(abs(mxb - cb), abs(mnb - cb)) for cb, mnb, mxb
                        in zip(cen, mini, maxi)]
-                       for cen, mini, maxi in zip(cen_scale, min_scale, max_scale) ]
+                       for cen, mini, maxi in zip(cen_scale,
+                                                  min_scale, max_scale) ]
 
         # reconstruct min_scale with the symmetric error band
         min_scale = [ [cb - mnb for cb, mnb in zip(cen, sym)]
@@ -84,12 +85,12 @@ def scale_var(args):
 def match_nlo(args):
     try:
         # inputs
-        lo_in = [Path(path) for path in args.lo if Path(path).exists()]
+        lo_in   = [Path(path) for path in args.lo if Path(path).exists()]
         virt_in = [Path(path) for path in args.virt if Path(path).exists()]
         real_in = [Path(path) for path in args.real if Path(path).exists()]
 
         # number of inputs for consistency checks
-        num_lo_in = len(lo_in)
+        num_lo_in   = len(lo_in)
         num_virt_in = len(virt_in)
         num_real_in = len(real_in)
     except TypeError:
@@ -101,12 +102,13 @@ def match_nlo(args):
 
     if num_lo_in == num_virt_in == num_real_in:
         # histograms from inputs
-        lo_histos = [read_mcfmhisto(hist_in) for hist_in in lo_in]
+        lo_histos   = [read_mcfmhisto(hist_in) for hist_in in lo_in]
         virt_histos = [read_mcfmhisto(hist_in) for hist_in in virt_in]
         real_histos = [read_mcfmhisto(hist_in) for hist_in in real_in]
 
         # derived histograms
-        nlo_histos = [lo + virt + real for lo, virt, real in zip(lo_histos, virt_histos, real_histos)]
+        nlo_histos  = [lo + virt + real for lo, virt, real
+                       in zip(lo_histos, virt_histos, real_histos)]
     else:
         print("Unequal numbers of inputs")
         exit()
@@ -116,17 +118,18 @@ def match_nlo(args):
 def match_nlo_nll(args):
     try:
         # inputs
-        lo_in = [Path(path) for path in args.lo if Path(path).exists()]
-        virt_in = [Path(path) for path in args.virt if Path(path).exists()]
-        real_in = [Path(path) for path in args.real if Path(path).exists()]
-        nll_in = [Path(path) for path in args.nll if Path(path).exists()]
-        nllexpd_in = [Path(path) for path in args.nllexpd if Path(path).exists()]
+        lo_in      = [Path(path) for path in args.lo if Path(path).exists()]
+        virt_in    = [Path(path) for path in args.virt if Path(path).exists()]
+        real_in    = [Path(path) for path in args.real if Path(path).exists()]
+        nll_in     = [Path(path) for path in args.nll if Path(path).exists()]
+        nllexpd_in = [Path(path) for path in args.nllexpd
+                      if Path(path).exists()]
 
         # number of inputs for consistency checks
-        num_lo_in = len(lo_in)
-        num_virt_in = len(virt_in)
-        num_real_in = len(real_in)
-        num_nll_in = len(nll_in)
+        num_lo_in      = len(lo_in)
+        num_virt_in    = len(virt_in)
+        num_real_in    = len(real_in)
+        num_nll_in     = len(nll_in)
         num_nllexpd_in = len(nllexpd_in)
     except TypeError:
         print("there need to be inputs for lo, virt and real")
@@ -137,14 +140,15 @@ def match_nlo_nll(args):
 
     if num_lo_in == num_virt_in == num_real_in == num_nll_in == num_nllexpd_in:
         # histograms from inputs
-        lo_histos = [read_mcfmhisto(hist_in) for hist_in in lo_in]
+        lo_histos   = [read_mcfmhisto(hist_in) for hist_in in lo_in]
         virt_histos = [read_mcfmhisto(hist_in) for hist_in in virt_in]
         real_histos = [read_mcfmhisto(hist_in) for hist_in in real_in]
-        nll_histos = [read_mcfmhisto(hist_in) for hist_in in nll_in]
+        nll_histos  = [read_mcfmhisto(hist_in) for hist_in in nll_in]
         nll1_histos = [read_mcfmhisto(hist_in) for hist_in in nllexpd_in]
 
         # derived histograms
-        nlo1_histos = [virt + real for virt, real in zip(virt_histos, real_histos)]
+        nlo1_histos = [virt + real for virt, real
+                       in zip(virt_histos, real_histos)]
 
         matched_histos = [nll*(1 + (nlo1-nll1)/lo) for lo, nlo1, nll, nll1 in
                           zip(lo_histos, nlo1_histos, nll_histos, nll1_histos)]
@@ -158,24 +162,32 @@ def match_nlo_nnll(args):
     # assume the default of scheme a throughout
     try:
         # inputs
-        lo_in = [Path(path) for path in args.lo if Path(path).exists()]
-        virt_in = [Path(path) for path in args.virt if Path(path).exists()]
-        real_in = [Path(path) for path in args.real if Path(path).exists()]
-        nnll_in = [Path(path) for path in args.nnll if Path(path).exists()]
-        nnllexpd_in = [Path(path) for path in args.nnllexpd if Path(path).exists()]
-        lumi0_in = [Path(path) for path in args.lumi0 if Path(path).exists()]
-        lumi1_in = [Path(path) for path in args.lumi1 if Path(path).exists()]
+        lo_in       = [Path(path) for path in args.lo
+                       if Path(path).exists()]
+        virt_in     = [Path(path) for path in args.virt
+                       if Path(path).exists()]
+        real_in     = [Path(path) for path in args.real
+                       if Path(path).exists()]
+        nnll_in     = [Path(path) for path in args.nnll
+                       if Path(path).exists()]
+        nnllexpd_in = [Path(path) for path in args.nnllexpd
+                       if Path(path).exists()]
+        lumi0_in    = [Path(path) for path in args.lumi0
+                       if Path(path).exists()]
+        lumi1_in    = [Path(path) for path in args.lumi1
+                       if Path(path).exists()]
         if args.scheme == "b":
-            real_incl_in = [Path(path) for path in args.real_inclusive if Path(path).exists]
+            real_incl_in = [Path(path) for path in args.real_inclusive
+                            if Path(path).exists]
 
         # number of inputs for consistency checks
-        num_lo_in = len(lo_in)
-        num_virt_in = len(virt_in)
-        num_real_in = len(real_in)
-        num_nnll_in = len(nnll_in)
+        num_lo_in       = len(lo_in)
+        num_virt_in     = len(virt_in)
+        num_real_in     = len(real_in)
+        num_nnll_in     = len(nnll_in)
         num_nnllexpd_in = len(nnllexpd_in)
-        num_lumi0_in = len(lumi0_in)
-        num_lumi1_in = len(lumi1_in)
+        num_lumi0_in    = len(lumi0_in)
+        num_lumi1_in    = len(lumi1_in)
         if args.scheme == "b":
             num_real_incl_in = len(real_incl_in)
     except TypeError:
@@ -185,35 +197,41 @@ def match_nlo_nnll(args):
         print("something weird and unexpected happened")
         exit()
 
-    if num_lo_in == num_virt_in == num_real_in == num_nnll_in == num_nnllexpd_in == num_lumi0_in == num_lumi1_in:
+    if (num_lo_in == num_virt_in == num_real_in == num_nnll_in == 
+        num_nnllexpd_in == num_lumi0_in == num_lumi1_in):
         # histograms from inputs
-        lo_histos = [read_mcfmhisto(hist_in) for hist_in in lo_in]
-        virt_histos = [read_mcfmhisto(hist_in) for hist_in in virt_in]
-        real_histos = [read_mcfmhisto(hist_in) for hist_in in real_in]
-        nnll_histos = [read_mcfmhisto(hist_in) for hist_in in nnll_in]
+        lo_histos    = [read_mcfmhisto(hist_in) for hist_in in lo_in]
+        virt_histos  = [read_mcfmhisto(hist_in) for hist_in in virt_in]
+        real_histos  = [read_mcfmhisto(hist_in) for hist_in in real_in]
+        nnll_histos  = [read_mcfmhisto(hist_in) for hist_in in nnll_in]
         nnll1_histos = [read_mcfmhisto(hist_in) for hist_in in nnllexpd_in]
         lumi0_histos = [read_mcfmhisto(hist_in) for hist_in in lumi0_in]
         lumi1_histos = [read_mcfmhisto(hist_in) for hist_in in lumi1_in]
 
         # derived histograms
-        dlumi_histos = [lumi1/lumi0 for lumi0, lumi1 in zip(lumi0_histos, lumi1_histos)]
-        Sigma1_histos = [virt + real for virt, real in zip(virt_histos, real_histos)]
+        dlumi_histos   = [lumi1/lumi0 for lumi0, lumi1
+                          in zip(lumi0_histos, lumi1_histos)]
+        Sigma1_histos  = [virt + real for virt, real
+                          in zip(virt_histos, real_histos)]
 
-        matched_histos = [nnll*(1 + (Sigma1-nnll1)/(lo*(1+dlumi))) for lo, Sigma1, nnll, nnll1, dlumi in
-                          zip(lo_histos, Sigma1_histos, nnll_histos, nnll1_histos, dlumi_histos)]
+        matched_histos = [nnll*(1 + (Sigma1-nnll1)/(lo*(1+dlumi)))
+                          for lo, Sigma1, nnll, nnll1, dlumi
+                          in zip(lo_histos, Sigma1_histos, nnll_histos,
+                                 nnll1_histos, dlumi_histos)]
     else:
         print("Unequal numbers of inputs")
         exit()
 
     if args.scheme == "b":
         if num_real_incl_in == num_lo_in:
-            real_incl_histos = [read_mcfmhisto(hist_in) for hist_in in real_incl_in]
-
-            sigma1_histos = [virt + real for virt, real in zip(virt_histos, real_incl_histos)]
-
-            matched_histos = [ma - sigma1*nnll/(lo*(1+dlumi))
-                              for ma, lo, sigma1, nnll, dlumi in
-                              zip(matched_histos, lo_histos, sigma1_histos, nnll_histos, dlumi_histos)]
+            real_incl_histos = [read_mcfmhisto(hist_in) for hist_in
+                                in real_incl_in]
+            sigma1_histos    = [virt + real for virt, real
+                                in zip(virt_histos, real_incl_histos)]
+            matched_histos   = [ma - sigma1*nnll/(lo*(1+dlumi))
+                                for ma, lo, sigma1, nnll, dlumi in
+                                zip(matched_histos, lo_histos, sigma1_histos,
+                                    nnll_histos, dlumi_histos)]
 
     return matched_histos
 
@@ -233,7 +251,7 @@ def efficiency(args):
         pass
 
     # efficiency
-    eff = [ veto/incl for veto, incl in zip(veto_hist, incl_hist) ]
+    eff = [veto/incl for veto, incl in zip(veto_hist, incl_hist)]
 
     return eff
 
@@ -255,234 +273,264 @@ subparsers = parser.add_subparsers(title="",
 parser_data  = subparsers.add_parser("histo_mk",
                                      description="",
                                      help="")
-parser_data.add_argument('input',
-                    metavar='input(s)',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help="mcfm .dat file(s) to be processed")
-parser_data.add_argument('-o', '--output',
-                    dest='output',
-                    type=str,
-                    action='store',
-                    default='histogram',
-                    help="""The prefix that is attached at the start of the
-                    output filename""")
-parser_data.add_argument('--average',
-                    action='store_true',
-                    help="""Average over the input files, i.e. report
-                    histograms as sum over inputs divide the number of inputs.
-                    One should use this if runs were performed in parallel, but
-                    with the same setup""")
+parser_data.add_argument(
+    'input',
+    metavar='input(s)',
+    type=str,
+    action='store',
+    nargs='+',
+    help="mcfm .dat file(s) to be processed")
+parser_data.add_argument(
+    '-o', '--output',
+    dest='output',
+    type=str,
+    action='store',
+    default='histogram',
+    help="""The prefix that is attached at the start of the output filename""")
+parser_data.add_argument(
+    '--average',
+    action='store_true',
+    help="""Average over the input files, i.e. report histograms as sum over
+    inputs divide the number of inputs. One should use this if runs were
+    performed in parallel, but with the same setup""")
 parser_data.set_defaults(func=histo_mk)
 
-parser_scale = subparsers.add_parser("scale_var",
-                                     description="",
-                                     help="")
-parser_scale.add_argument('-cs', '--central_scale',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help="""mcfm histogram file(s) for a given set of
-                    observables that consistitute the central scale""")
-parser_scale.add_argument('-vs', '--variation_scales',
-                    type=str,
-                    action='store',
-                    nargs='*',
-                    help="""mcfm histogram file(s) that constitute the scale
-                    variations to be performed""")
-parser_scale.add_argument('-s', '--symmetric',
-                    dest='symmetric',
-                    action='store_true',
-                    help="""Symmetrise the uncertainty bands by taking
-                    the maximum of the upper and lower uncertainties""")
-parser_scale.add_argument('-o', '--output',
-                    dest='output',
-                    type=str,
-                    action='store',
-                    default='histogram',
-                    help="""The prefix that is attached at the start of the
-                    output filename""")
+parser_scale = subparsers.add_parser(
+    "scale_var",
+    description="",
+    help="")
+parser_scale.add_argument(
+    '-cs', '--central_scale',
+    type=str,
+    action='store',
+    nargs='+',
+    help="""mcfm histogram file(s) for a given set of
+    observables that consistitute the central scale""")
+parser_scale.add_argument(
+    '-vs', '--variation_scales',
+    type=str,
+    action='store',
+    nargs='*',
+    help="""mcfm histogram file(s) that constitute the scale
+    variations to be performed""")
+parser_scale.add_argument(
+    '-s', '--symmetric',
+    dest='symmetric',
+    action='store_true',
+    help="""Symmetrise the uncertainty bands by taking the maximum of the upper
+    and lower uncertainties""")
+parser_scale.add_argument(
+    '-o', '--output',
+    dest='output',
+    type=str,
+    action='store',
+    default='histogram',
+    help="""The prefix that is attached at the start of the output filename""")
 parser_scale.set_defaults(func=scale_var)
 
-parser_match = subparsers.add_parser("match",
-                                     description="",
-                                     help="")
-match_subparsers = parser_match.add_subparsers(title="subcommands",
-                                   description="des",
-                                   help="help me")
-
-parser_match_nlo = match_subparsers.add_parser("nlo",
-                                        description="",
-                                        help="")
-parser_match_nlo.add_argument('-l', '--lo',
-                    dest='lo',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo.add_argument('-v', '--virt',
-                    required=True,
-                    dest='virt',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo.add_argument('-r', '--real',
-                    required=True,
-                    dest='real',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo.add_argument('-o', '--output',
-                    dest='output',
-                    type=str,
-                    action='store',
-                    default='histogram',
-                    help="""The prefix that is attached at the start of the
-                    output filename""")
+parser_match = subparsers.add_parser(
+    "match",
+    description="",
+    help="")
+match_subparsers = parser_match.add_subparsers(
+    title="subcommands",
+    description="des",
+    help="help me")
+parser_match_nlo = match_subparsers.add_parser(
+    "nlo",
+    description="",
+    help="")
+parser_match_nlo.add_argument(
+    '-l', '--lo',
+    dest='lo',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo.add_argument(
+    '-v', '--virt',
+    required=True,
+    dest='virt',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo.add_argument(
+    '-r', '--real',
+    required=True,
+    dest='real',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo.add_argument(
+    '-o', '--output',
+    dest='output',
+    type=str,
+    action='store',
+    default='histogram',
+    help="""The prefix that is attached at the start of the output filename""")
 parser_match_nlo.set_defaults(func=match_nlo)
 
-parser_match_nlo_nll = match_subparsers.add_parser("nlo+nll",
-                                            description="",
-                                            help="")
-parser_match_nlo_nll.add_argument('-l', '--lo',
-                    dest='lo',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nll.add_argument('-v', '--virt',
-                    dest='virt',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nll.add_argument('-r', '--real',
-                    dest='real',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nll.add_argument('--nll',
-                    dest='nll',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nll.add_argument('--nllexpd',
-                    dest='nllexpd',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nll.add_argument('-ri', '--real_inclusive',
-                    dest='real_inclusive',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help="""The inclusive real cross section with no constraints
-                    on QCD radiation applied, only necessary for scheme 'b'""")
-parser_match_nlo_nll.add_argument('-o', '--output',
-                    dest='output',
-                    type=str,
-                    action='store',
-                    default='histogram',
-                    help="""The prefix that is attached at the start of the
-                    output filename""")
+parser_match_nlo_nll = match_subparsers.add_parser(
+    "nlo+nll",
+    description="",
+    help="")
+parser_match_nlo_nll.add_argument(
+    '-l', '--lo',
+    dest='lo',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nll.add_argument(
+    '-v', '--virt',
+    dest='virt',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nll.add_argument(
+    '-r', '--real',
+    dest='real',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nll.add_argument(
+    '--nll',
+    dest='nll',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nll.add_argument(
+    '--nllexpd',
+    dest='nllexpd',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nll.add_argument(
+    '-ri', '--real_inclusive',
+    dest='real_inclusive',
+    type=str,
+    action='store',
+    nargs='+',
+    help="""The inclusive real cross section with no constraints on QCD
+    radiation applied, only necessary for scheme 'b'""")
+parser_match_nlo_nll.add_argument(
+    '-o', '--output',
+    dest='output',
+    type=str,
+    action='store',
+    default='histogram',
+    help="""The prefix that is attached at the start of the output filename""")
 parser_match_nlo_nll.set_defaults(func=match_nlo_nll)
 
-parser_match_nlo_nnll = match_subparsers.add_parser("nlo+nnll",
-                                            description="",
-                                            help="")
-parser_match_nlo_nnll.add_argument('-s', '--scheme',
-                    dest='scheme',
-                    type=str,
-                    action='store',
-                    default='a',
-                    choices=['a', 'b'],
-                    help="""""")
-parser_match_nlo_nnll.add_argument('-l', '--lo',
-                    dest='lo',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nnll.add_argument('-v', '--virt',
-                    dest='virt',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nnll.add_argument('-r', '--real',
-                    dest='real',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nnll.add_argument('--nnll',
-                    dest='nnll',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nnll.add_argument('--nnllexpd',
-                    dest='nnllexpd',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nnll.add_argument('--lumi0',
-                    dest='lumi0',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nnll.add_argument('--lumi1',
-                    dest='lumi1',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help='')
-parser_match_nlo_nnll.add_argument('-ri', '--real_inclusive',
-                    dest='real_inclusive',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help="""The inclusive real cross section with no constraints
-                    on QCD radiation applied, only necessary for scheme 'b'""")
-parser_match_nlo_nnll.add_argument('-o', '--output',
-                    dest='output',
-                    type=str,
-                    action='store',
-                    default='histogram',
-                    help="""The prefix that is attached at the start of the
-                    output filename""")
+parser_match_nlo_nnll = match_subparsers.add_parser(
+    "nlo+nnll",
+    description="",
+    help="")
+parser_match_nlo_nnll.add_argument(
+    '-s', '--scheme',
+    dest='scheme',
+    type=str,
+    action='store',
+    default='a',
+    choices=['a', 'b'],
+    help="""""")
+parser_match_nlo_nnll.add_argument(
+    '-l', '--lo',
+    dest='lo',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nnll.add_argument(
+    '-v', '--virt',
+    dest='virt',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nnll.add_argument(
+    '-r', '--real',
+    dest='real',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nnll.add_argument(
+    '--nnll',
+    dest='nnll',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nnll.add_argument(
+    '--nnllexpd',
+    dest='nnllexpd',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nnll.add_argument(
+    '--lumi0',
+    dest='lumi0',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nnll.add_argument(
+    '--lumi1',
+    dest='lumi1',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nlo_nnll.add_argument(
+    '-ri', '--real_inclusive',
+    dest='real_inclusive',
+    type=str,
+    action='store',
+    nargs='+',
+    help="""The inclusive real cross section with no constraints on QCD
+    radiation applied, only necessary for scheme 'b'""")
+parser_match_nlo_nnll.add_argument(
+    '-o', '--output',
+    dest='output',
+    type=str,
+    action='store',
+    default='histogram',
+    help="""The prefix that is attached at the start of the output filename""")
 parser_match_nlo_nnll.set_defaults(func=match_nlo_nnll)
 
-parser_efficiency = subparsers.add_parser("efficiency",
-                                            description="",
-                                            help="")
-parser_efficiency.add_argument('-c', '--with_cuts',
-                    dest='vetoed',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help="""""")
-parser_efficiency.add_argument('-i', '--inclusive',
-                    dest='inclusive',
-                    type=str,
-                    action='store',
-                    nargs='+',
-                    help="""""")
-parser_efficiency.add_argument('-o', '--output',
-                    dest='output',
-                    type=str,
-                    action='store',
-                    default='histogram',
-                    help="""The prefix that is attached at the start of the
-                    output filename""")
+parser_efficiency = subparsers.add_parser(
+    "efficiency",
+    description="",
+    help="")
+parser_efficiency.add_argument(
+    '-c', '--with_cuts',
+    dest='vetoed',
+    type=str,
+    action='store',
+    nargs='+',
+    help="""""")
+parser_efficiency.add_argument(
+    '-i', '--inclusive',
+    dest='inclusive',
+    type=str,
+    action='store',
+    nargs='+',
+    help="""""")
+parser_efficiency.add_argument(
+    '-o', '--output',
+    dest='output',
+    type=str,
+    action='store',
+    default='histogram',
+    help="""The prefix that is attached at the start of the output filename""")
 parser_efficiency.set_defaults(func=efficiency)
 
 parser_delta = subparsers.add_parser("delta", help="")
@@ -550,26 +598,32 @@ class mcfmhisto(object):
 
     def __neg__(self):
         xsecs = [-x for x in self.xsecs]
-        return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+        return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax,
+                         self.bins, xsecs)
 
     def __pos__(self):
         xsecs = [+x for x in self.xsecs]
-        return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+        return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax,
+                         self.bins, xsecs)
 
     def __pow__(self, other):
         if isinstance(other, numbers.Real):
-            # catch negative powers of zero that would give divide by zero exceptions
-            # we tactically assume that this errors always comes from the matching
-            # where we have expressions like 0*(1 + 0/0) which is well defined
-            xsecs = [0.0 if x == 0 and other <= 0 else x**other for x in self.xsecs]
-            return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+            # catch negative powers of zero that would give divide by zero
+            # exceptions we tactically assume that this errors always comes
+            # from the matching where we have expressions like 0*(1 + 0/0)
+            # which is well defined
+            xsecs = [0.0 if x == 0 and other <= 0
+                     else x**other for x in self.xsecs]
+            return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax,
+                             self.bins, xsecs)
         else:
             return NotImplemented
 
     def __add__(self, other):
         if isinstance(other, numbers.Real):
             xsecs = [other + x for x in self.xsecs]
-            return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+            return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax,
+                             self.bins, xsecs)
         elif isinstance(other, mcfmhisto):
             try:
                 if self.obs == None:
@@ -579,7 +633,8 @@ class mcfmhisto(object):
                 elif self.obs != other.obs:
                     raise MixedObs
                 xsecs = [x + y for x, y in zip(self.xsecs, other.xsecs)]
-                return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+                return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax,
+                                 self.bins, xsecs)
             except TypeError:
                 if self.xsecs is None and other.xsecs is None:
                     return self
@@ -606,7 +661,8 @@ class mcfmhisto(object):
     def __mul__(self, other):
         if isinstance(other, numbers.Real):
             xsecs = [other * x for x in self.xsecs]
-            return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+            return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax,
+                             self.bins, xsecs)
         elif isinstance(other, mcfmhisto):
             try:
                 if self.obs == None:
@@ -616,7 +672,8 @@ class mcfmhisto(object):
                 elif self.obs != other.obs:
                     raise MixedObs
                 xsecs = [x * y for x, y in zip(self.xsecs, other.xsecs)]
-                return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax, self.bins, xsecs)
+                return mcfmhisto(self.obs, self.nbins, self.xmin, self.xmax,
+                                 self.bins, xsecs)
             except TypeError:
                 if self.xsecs is None and other.xsecs is None:
                     return self
@@ -641,7 +698,8 @@ class mcfmhisto(object):
         return self**-1 * other
 
 class scalehisto(object):
-    def __init__(self, obs, nbins, xmin, xmax, bins, central_scale, min_scale, max_scale):
+    def __init__(self, obs, nbins, xmin, xmax, bins, central_scale,
+                 min_scale, max_scale):
         self.obs = obs
         self.nbins = nbins
         self.xmin = xmin
@@ -660,7 +718,10 @@ class scalehisto(object):
 ## END HEADER
 ## BEGIN HISTOGRAM
 """.format(obs=self.obs, nbins=self.nbins, xmin=self.xmin, xmax=self.xmax)
-        for bin, cen, mini, maxi in zip(self.bins, self.central_scale, self.min_scale, self.max_scale):
+        for bin, cen, mini, maxi in zip(self.bins,
+                                        self.central_scale,
+                                        self.min_scale,
+                                        self.max_scale):
             pretty_histo += "{:08.3f}\t{:014.10f}\t{:014.10f}\t{:014.10f}\n".format(bin, cen, mini, maxi)
         pretty_histo += "## END HISTOGRAM"
 
@@ -750,7 +811,8 @@ def nonempty_lines(f):
         if line:
             yield line
 
-def per_section(it, is_delimiter=lambda line: line.startswith("HIST")):
+def per_section(it,
+                is_delimiter=lambda line: line.startswith("HIST")):
     ret = []
     for line in it:
         # remove leading and trailing spaces
@@ -762,7 +824,9 @@ def per_section(it, is_delimiter=lambda line: line.startswith("HIST")):
             ret.append(line)
     yield ret
 
-def per_section2(it, is_head=lambda line: line.startswith("##"), is_tail=lambda line: line.startswith("##")):
+def per_section2(it,
+                 is_head=lambda line: line.startswith("##"),
+                 is_tail=lambda line: line.startswith("##")):
     ret = []
     record_mode = False
     for line in it:
