@@ -570,6 +570,13 @@ parser_match_nnll_pure.add_argument(
     choices=['a', 'b'],
     help="""""")
 parser_match_nnll_pure.add_argument(
+    '--nnll',
+    dest='nnll',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nnll_pure.add_argument(
     '-l', '--lo',
     dest='lo',
     type=str,
