@@ -48,7 +48,9 @@ def scale_var(args):
         all_hist = [ [cen] + [var for var in var_hist if var.obs == cen.obs]
                      for cen in cen_hist ]
     except:
-        pass
+        # pass
+        print("Something nasty happened processing histograms for the scale variations")
+        exit()
 
     # central scale
     cen_scale = [ cen.xsecs for cen in cen_hist]
@@ -584,7 +586,7 @@ class mcfmhisto(object):
 ## BEGIN HISTOGRAM
 """.format(obs=self.obs, nbins=self.nbins, xmin=self.xmin, xmax=self.xmax)
         for bin, xsec in zip(self.bins, self.xsecs):
-            pretty_histo += "{:08.3f}\t{:014.10f}\n".format(bin, xsec)
+            pretty_histo += "{:08.3f}\t{:014.10E}\n".format(bin, xsec)
         pretty_histo += "## END HISTOGRAM"
 
         return pretty_histo
@@ -722,7 +724,7 @@ class scalehisto(object):
                                         self.central_scale,
                                         self.min_scale,
                                         self.max_scale):
-            pretty_histo += "{:08.3f}\t{:014.10f}\t{:014.10f}\t{:014.10f}\n".format(bin, cen, mini, maxi)
+            pretty_histo += "{:08.3f}\t{:014.10E}\t{:014.10E}\t{:014.10E}\n".format(bin, cen, mini, maxi)
         pretty_histo += "## END HISTOGRAM"
 
         return pretty_histo
@@ -849,6 +851,10 @@ if __name__ == "__main__":
 
     histograms = args.func(args)
 
-    for hist in histograms:
-        with open(args.output + "-" + hist.obs, "w") as f:
-            f.write(str(hist))
+    for histnum, hist in enumerate(histograms):
+        try:
+            with open(args.output + "-" + hist.obs, "w") as f:
+                f.write(str(hist))
+        except:
+            # print("Histogram {} failed".format(histnum))
+            pass
