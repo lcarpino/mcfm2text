@@ -237,6 +237,55 @@ def match_nlo_nnll(args):
 
     return matched_histos
 
+def match_nnll_pure(args):
+    # assume the default of scheme a throughout
+    try:
+        # inputs
+        nnll_in     = [Path(path) for path in args.nnll
+                       if Path(path).exists()]
+        if args.scheme == "b":
+            lo_in       = [Path(path) for path in args.lo
+                           if Path(path).exists()]
+            virt_in     = [Path(path) for path in args.virt
+                           if Path(path).exists()]
+            real_incl_in = [Path(path) for path in args.real_inclusive
+                            if Path(path).exists]
+
+        # number of inputs for consistency checks
+        num_nnll_in     = len(nnll_in)
+        if args.scheme == "b":
+            num_lo_in        = len(lo_in)
+            num_virt_in      = len(virt_in)
+            num_real_incl_in = len(real_incl_in)
+    except TypeError:
+        print("there need to be inputs for nnll")
+        exit()
+    except:
+        print("something weird and unexpected happened")
+        exit()
+
+    # histograms from inputs
+    nnll_histos  = [read_mcfmhisto(hist_in) for hist_in in nnll_in]
+
+    # derived histograms
+    matched_histos = [nnll for nnll in nnll_histos]
+
+    if args.scheme == "b":
+        if num_nnll_in == num_lo_in == num_virt_in == num_real_incl_in:
+            lo_histos    = [read_mcfmhisto(hist_in) for hist_in in lo_in]
+            virt_histos  = [read_mcfmhisto(hist_in) for hist_in in virt_in]
+            real_incl_histos = [read_mcfmhisto(hist_in) for hist_in
+                                in real_incl_in]
+            sigma1_histos    = [virt + real for virt, real
+                                in zip(virt_histos, real_incl_histos)]
+            matched_histos   = [ma - sigma1*nnll/lo
+                                for ma, lo, sigma1, nnll in
+                                zip(matched_histos, lo_histos, sigma1_histos,
+                                    nnll_histos)]
+
+    return matched_histos
+
+
 def efficiency(args):
     vetoed    = [Path(path) for path in args.vetoed
                  if Path(path).exists()]
@@ -507,6 +556,49 @@ parser_match_nlo_nnll.add_argument(
     default='histogram',
     help="""The prefix that is attached at the start of the output filename""")
 parser_match_nlo_nnll.set_defaults(func=match_nlo_nnll)
+
+parser_match_nnll_pure = match_subparsers.add_parser(
+    "nnll_pure",
+    description="",
+    help="")
+parser_match_nnll_pure.add_argument(
+    '-s', '--scheme',
+    dest='scheme',
+    type=str,
+    action='store',
+    default='a',
+    choices=['a', 'b'],
+    help="""""")
+parser_match_nnll_pure.add_argument(
+    '-l', '--lo',
+    dest='lo',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nnll_pure.add_argument(
+    '-v', '--virt',
+    dest='virt',
+    type=str,
+    action='store',
+    nargs='+',
+    help='')
+parser_match_nnll_pure.add_argument(
+    '-ri', '--real_inclusive',
+    dest='real_inclusive',
+    type=str,
+    action='store',
+    nargs='+',
+    help="""The inclusive real cross section with no constraints on QCD
+    radiation applied, only necessary for scheme 'b'""")
+parser_match_nnll_pure.add_argument(
+    '-o', '--output',
+    dest='output',
+    type=str,
+    action='store',
+    default='histogram',
+    help="""The prefix that is attached at the start of the output filename""")
+parser_match_nnll_pure.set_defaults(func=match_nnll_pure)
 
 parser_efficiency = subparsers.add_parser(
     "efficiency",
