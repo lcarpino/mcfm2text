@@ -3,6 +3,7 @@
 from pathlib import Path
 from functools import reduce
 from operator import add
+from math import sqrt
 import argparse
 import numbers
 import re
@@ -80,9 +81,17 @@ def scale_var(args):
         max_scale = [ [cb + mxb for cb, mxb in zip(cen, sym)]
                       for cen, sym in zip(cen_scale, sym_scale)]
 
-    return [scalehisto(cen.obs, cen.nbins, cen.xmin, cen.xmax,
-                       cen.bins, cen.xsecs, mini, maxi)
-            for cen, mini, maxi in zip(cen_hist, min_scale, max_scale)]
+        result = [scalesymhisto(cen.obs, cen.nbins, cen.xmin, cen.xmax,
+                          cen.bins, cen.xsecs, err)
+            for cen, err in zip(cen_hist, sym_scale)]
+
+    else:
+        result = [scalehisto(cen.obs, cen.nbins, cen.xmin, cen.xmax,
+                             cen.bins, cen.xsecs, mini, maxi)
+                  for cen, mini, maxi in zip(cen_hist, min_scale, max_scale)]
+
+    return result
+
 
 def match_nlo(args):
     try:
@@ -305,6 +314,26 @@ def efficiency(args):
     eff = [veto/incl for veto, incl in zip(veto_hist, incl_hist)]
 
     return eff
+
+def jet_veto_efficiency(args):
+    efficiency = [Path(path) for path in args.efficiency
+                  if Path(path).exists()]
+    inclusive  = [Path(path) for path in args.inclusive_xsec
+                  if Path(path).exists()]
+
+    try:
+        eff_hist  = [read_scalesymhisto(hist_in) for hist_in in efficiency]
+        incl_hist = [read_scalesymhisto(hist_in) for hist_in in inclusive]
+
+        # have a check to make sure observables align and there are
+        # equal numbers of inputs?
+    except:
+        pass
+
+    # JVE
+    jve = [incl*eff for incl, eff in zip(incl_hist, eff_hist)]
+
+    return jve
 
 def delta(args):
     pass
@@ -634,6 +663,33 @@ parser_efficiency.add_argument(
     help="""The prefix that is attached at the start of the output filename""")
 parser_efficiency.set_defaults(func=efficiency)
 
+parser_jve = subparsers.add_parser(
+    "JVE",
+    description="",
+    help="")
+parser_jve.add_argument(
+    '-e', '--efficiency',
+    dest='efficiency',
+    type=str,
+    action='store',
+    nargs='+',
+    help="""""")
+parser_jve.add_argument(
+    '-x', '--inclusive_xsec',
+    dest='inclusive_xsec',
+    type=str,
+    action='store',
+    nargs='+',
+    help="""""")
+parser_jve.add_argument(
+    '-o', '--output',
+    dest='output',
+    type=str,
+    action='store',
+    default='histogram',
+    help="""The prefix that is attached at the start of the output filename""")
+parser_jve.set_defaults(func=jet_veto_efficiency)
+
 parser_delta = subparsers.add_parser("delta", help="")
 
 
@@ -828,6 +884,79 @@ class scalehisto(object):
 
         return pretty_histo
 
+class scalesymhisto(object):
+    def __init__(self, obs, nbins, xmin, xmax, bins, central_scale, sym_scale):
+        self.obs = obs
+        self.nbins = nbins
+        self.xmin = xmin
+        self.xmax = xmax
+        self.bins = bins
+        self.central_scale = central_scale
+        self.sym_scale = sym_scale
+
+    def __str__(self):
+        pretty_histo = """## BEGIN HEADER
+# observable name:
+# {obs}
+# nbins\txmin\txmax
+# {nbins}        {xmin}        {xmax}
+## END HEADER
+## BEGIN HISTOGRAM
+""".format(obs=self.obs, nbins=self.nbins, xmin=self.xmin, xmax=self.xmax)
+        for bin, cen, err in zip(self.bins,
+                                 self.central_scale,
+                                 self.sym_scale):
+            pretty_histo += "{:08.3f}\t{:014.10E}\t{:014.10E}\n".format(bin, cen, err)
+        pretty_histo += "## END HISTOGRAM"
+
+        return pretty_histo
+
+    def __mul__(self, other):
+        if isinstance(other, numbers.Real):
+            central_scales = [other * x for x in self.central_scale]
+            sym_scales     = [other * x for x in self.sym_scale]
+            return scalesymhisto(self.obs, self.nbins, self.xmin, self.xmax,
+                                 self.bins, central_scales, sym_scales)
+        elif isinstance(other, scalesymhisto):
+            try:
+                if self.obs == None:
+                    pass
+                elif other.obs == None:
+                    pass
+                elif self.obs != other.obs:
+                    raise MixedObs
+                central_scales = [x * y for x, y in zip(self.central_scale, other.central_scale)]
+                sym_scales = [err_quad(sc, sdc, oc, odc) for sc, sdc, oc, odc
+                              in zip(self.central_scale,
+                                     self.sym_scale,
+                                     other.central_scale,
+                                     other.sym_scale)]
+
+                # sym_scales = [abs(sc*oc)*sqrt( (sdc/sc)**2 + (odc/oc)**2 )
+                #               for sc, sdc, oc, odc
+                #               in zip(self.central_scale,
+                #                      self.sym_scale,
+                #                      other.central_scale,
+                #                      other.sym_scale)]
+
+                return scalesymhisto(self.obs, self.nbins, self.xmin, self.xmax,
+                                     self.bins, central_scales, sym_scales)
+            except TypeError:
+                if self.xsecs is None and other.xsecs is None:
+                    return self
+                elif self.xsecs is None:
+                    return other
+                elif other.xsecs is None:
+                    return self
+                else:
+                    return Exception
+            except MixedObs:
+                return "You can't mix observables, this doesn't make sense"
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
 
 
 
@@ -870,6 +999,20 @@ def parse_histo(histo_in):
 ####                 Helper Functions                   ####
 ############################################################
 
+def err_quad(x, dx, y, dy):
+
+    if x == 0:
+        dxonxsq = 0.0
+    else:
+        dxonxsq = (dx/x)**2
+
+    if y == 0:
+        dyonysq = 0.0
+    else:
+        dyonysq = (dy/y)**2
+
+    return abs(x*y)*sqrt(dxonxsq + dyonysq)
+
 def mcfm2hist(mcfm_hist):
     histlist = []
     for enum, hist_elem in enumerate(mcfm_hist):
@@ -905,6 +1048,33 @@ def read_mcfmhisto(mcfmhisto_in):
     ## Footer
 
     return mcfmhisto(obs_name, nbins, xmin, xmax, bins, xsecs)
+
+def read_scalesymhisto(mcfmhisto_in):
+    with open(str(mcfmhisto_in), "r") as f:
+        header, histogram = per_section2(nonempty_lines(f))
+
+    ## Header
+    # removes "# " from strings, maybe I can do this without
+    # magic numbers
+    obs_name = header[1][2:]
+    nbins, xmin, xmax = header[3][2:].split()
+    nbins = int(nbins)
+    xmin = float(xmin)
+    xmax = float(xmax)
+
+    ## Data
+    bins = []
+    central_scales = []
+    sym_scales = []
+    for line in histogram:
+        bin, central_scale, sym_scale = line.split()
+        bins.append(float(bin))
+        central_scales.append(float(central_scale))
+        sym_scales.append(float(sym_scale))
+
+    ## Footer
+
+    return scalesymhisto(obs_name, nbins, xmin, xmax, bins, central_scales, sym_scales)
 
 def nonempty_lines(f):
     for l in f:
